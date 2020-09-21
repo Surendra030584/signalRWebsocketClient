@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import * as signalR from '@aspnet/signalr';
 import { HubConnection, HubConnectionBuilder } from '@aspnet/signalr';
 
 @Injectable({
@@ -7,6 +8,12 @@ import { HubConnection, HubConnectionBuilder } from '@aspnet/signalr';
 export class ChatService {
 
   hubConnection: HubConnection;
+
+   startConnection = async () => {
+     this.hubConnection.start().then(() => {
+      console.log('connection established with message hub');
+    });
+  }
 
   constructor() {
     // create connection with Hub
@@ -21,26 +28,32 @@ export class ChatService {
     });
 
     // start connection with message hub.
-    this.hubConnection.start().then(() => {
-      console.log('connection established with message hub');
-    }).catch(error => {
-      console.log(error);
-    });
+    // this.startConnection();
   }
 
   sendMessage = message => {
-    this.hubConnection.invoke('SendMessage', message);
+    if (this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      this.hubConnection.invoke('SendMessage', message);
+    }
   }
 
   sendMessageToGroup = (username, groupName, message) => {
-    this.hubConnection.invoke('SendMessageToGroup', username, groupName, message);
+    this.hubConnection.start().then(() => {
+      this.hubConnection.invoke('SendMessageToGroup', username, groupName, message);
+    });
   }
 
   addToGroup = (username, groupName) => {
-    this.hubConnection.invoke('AddToGroup', username, groupName);
+    this.hubConnection.start().then(() => {
+      this.hubConnection.invoke('AddToGroup', username, groupName);
+    });
   }
 
   removeFromGroup = (username, groupName) => {
-    this.hubConnection.invoke('RemoveFromGroup', username, groupName);
+    this.hubConnection.start().then(() => {
+      this.hubConnection.invoke('RemoveFromGroup', username, groupName);
+    });
   }
+
+
 }
